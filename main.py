@@ -27,7 +27,7 @@ Yellow_Laser = OC.load('assets', 'pixel_laser_yellow.png')
 # Load Background
 BG = pygame.transform.scale(OC.load('assets', 'background-black.png'), (Width, Height))
 
-
+# Classes
 class player(Ship):
     def __init__(self, x, y, health=100):
         super().__init__(x, y, health)
@@ -36,46 +36,77 @@ class player(Ship):
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
 
+class Enemy(Ship):
+    Color_Map = {
+        'red': (Red_Space_Ship, Red_Laser),
+        'green': (Green_Space_Ship, Green_Laser),
+        'blue': (Blue_Space_Ship, Blue_Laser)
+    }
 
+    def __init__(self, x, y, color, health=100):
+        super().__init__(x, y, health)
+        self.ship_img, self.laser_img = self.Color_Map[color]
+        self.mask = pygame.mask.from_surface(self.ship_img)
+
+    def move(self, vel):
+        self.y += vel
 
 
 def main():
     Run = True
     FPS = 60
-    Level = 1
+    Level = 0
     Lives = 5
+
+    enemies = []
+    wave_length= 5
 
     player_vel = 5
 
     Player = player(300, 650)
+
     clock = pygame.time.Clock()
     Main_Font = pygame.font.SysFont('comicsans', 30)
 
     def Redraw_Window():
         Win.blit(BG, (0, 0))
+
+        # Draw Enemies
+        for enemy in enemies:
+            enemy.draw(Win)
+
+        Player.draw(Win)
+
         # Draw text
         Lives_Label = Main_Font.render(f'Lives : {Lives}', 1, (255, 255, 255))
         Level_Label = Main_Font.render(f'Level : {Level}', 1, (255, 255, 255))
         Win.blit(Lives_Label, (10, 10))
         Win.blit(Level_Label, (Width - Lives_Label.get_width() - 10, 10))
-
-        Player.draw(Win)
         pygame.display.update()
 
     while Run:
         clock.tick(FPS)
-        Redraw_Window()
+
+        if len(enemies) == 0:
+            level += 1
+            wave_length += 5
+            for i in range(wave_length):
+                enemy = Enemy(random.randrange(50, WIDTH - 100), random.randrange(-1500, -100), random.choice(['red', 'blue', 'green']))
+                enemies.append(enemy)
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 Run = False
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT] and Player.x - player_vel > 0:  # Left
             Player.x -= player_vel
-        if keys[pygame.K_RIGHT] and Player.x + player_vel + 50 < Width:  # Right
+        if keys[pygame.K_RIGHT] and Player.x + player_vel + Player.get_width() < Width:  # Right
             Player.x += player_vel
         if keys[pygame.K_UP] and Player.y - player_vel > 0:  # Up
             Player.y -= player_vel
-        if keys[pygame.K_DOWN] and Player.y + player_vel + 50 < Height:  # Down
+        if keys[pygame.K_DOWN] and Player.y + player_vel + Player.get_height() < Height:  # Down
             Player.y += player_vel
+
+        Redraw_Window()
 
 main()
